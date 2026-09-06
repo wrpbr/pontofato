@@ -1,0 +1,45 @@
+# PontoFato
+
+> Ponto CNEFE (coordenada IBGE) + empresas no CEP. Não é ViaCEP. Cliente: agente.
+
+## Descoberta
+
+- [Índice da API](https://pontofato.com/api/)
+- [llms.txt](https://pontofato.com/llms.txt)
+- [llms-full.txt](https://pontofato.com/llms-full.txt)
+- [OpenAPI](https://pontofato.com/openapi.json)
+- [MCP](https://pontofato.com/mcp)
+
+## Endpoints principais
+
+- `GET /okf/:arquivo` — Bundle OKF (Open Knowledge Format v0.1): markdown com frontmatter para o agente ler o produto inteiro sem parsear HTML. (auth: none)
+- `GET /.well-known/:arquivo` — Descoberta de máquina antes da home: `api-catalog` (RFC 9727, linkset com a API e o MCP), `security.txt` (RFC 9116) e `mcp-registry-auth` (chave do registro oficial de MCP). (auth: none)
+- `GET /apis.json` — APIs.json (apisjson.org, 0.19): o índice que o APIs.io colhe — a API, o MCP, OpenAPI, guia e bundle OKF num arquivo só. Também em `/.well-known/apis.json`. (auth: none)
+- `POST /mcp` — MCP Streamable HTTP — as tools deste catálogo, despachadas neste mesmo Worker. (auth: none)
+- `GET /api/cep/:cep` — Pontos CNEFE de um CEP, com lat/lon IBGE — não é chute de mapa. (auth: none)
+- `GET /api/cep/:cep/unidades` — Unidades CNEFE de um CEP, com complemento, espécie e id — paginado. (auth: none)
+- `GET /api/proximo` — Ponto CNEFE mais perto de um par lat/lon. Sem default para (0,0). (auth: none)
+- `GET /api/buscar` — Busca textual de logradouro (FTS5), com UF e cidade opcionais. (auth: none)
+- `GET /api/empresas` — Estabelecimentos da Receita neste CEP (join no c3, teto 50). (auth: none)
+- `GET /api/raio` — CEPs a N metros de um ponto, com distância e quantos endereços CNEFE cada um tem — raio em metros, não bairro em texto. (auth: none)
+- `GET /api/vizinhanca` — Empresas ativas, abertas e baixadas num raio em metros, por CNAE, com as aberturas mais recentes e a distância de cada uma — o CNEFE dá o raio, a Receita dá o fato. (auth: credito)
+- `GET /api/local` — Cidade/UF de quem chama, pela borda Cloudflare. Sem cache. (auth: none)
+- `GET /api/metrics` — Métricas dos últimos 7 dias para o painel do operador; com o token, inclui os pagamentos. (auth: none)
+- `POST /api/credito` — Recarrega crédito pré-pago: paga uma vez com x402 e recebe o token que desconta em qualquer API da casa. (auth: none)
+- `GET /api/credito` — Saldo e extrato do crédito — as últimas movimentações, sem devolver o token. (auth: credito)
+
+## Contato agente
+
+- `POST /api/contact` sem captcha → **HTTP 402** x402 **$0.10** USDC.
+- `GET /api/vizinhanca` além de 10 chamadas/dia → **HTTP 402**: x402 **$0.05** ou crédito pré-pago.
+
+## Cota
+
+- Grátis: lookup de CEP, próximo, busca, raio e empresas — sem cota no v1.
+- Grátis: vizinhança por raio — 10 chamadas por dia por IP.
+- Pago: vizinhança por raio, além da cota — **$0.05** USDC via x402.
+- Pago: contato de agente — **$0.10** USDC via x402.
+
+Rota paga → **402** com `accepts[]` (x402) e `credito` (pré-pago, `POST /api/credito?usd=10`, vale em todos os produtos). Pague e repita com `X-PAYMENT`, ou mande `Authorization: Bearer cred_…`.
+
+Números em vigor: https://pontofato.com/api/

@@ -1,0 +1,1871 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "PontoFato",
+    "version": "2d690e87",
+    "description": "Ponto e fato de um lugar no Brasil. Índice: GET /api/."
+  },
+  "servers": [
+    {
+      "url": "https://pontofato.com"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "Saude": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "description": "`true` quando há pelo menos uma UF no disco."
+          },
+          "origem": {
+            "type": "string",
+            "description": "`sqlite` ou `indisponivel`."
+          },
+          "cobertura": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Cobertura"
+              }
+            ],
+            "description": "UFs presentes."
+          },
+          "pontos": {
+            "type": "integer",
+            "description": "Soma de linhas nas UFs montadas."
+          },
+          "build": {
+            "type": "string",
+            "description": "Commit publicado neste Worker (`BUILD`)."
+          }
+        },
+        "required": [
+          "ok",
+          "origem",
+          "cobertura",
+          "pontos",
+          "build"
+        ],
+        "description": "Se a origem sqlite está no ar e o quanto da malha já foi ingerida."
+      },
+      "Cobertura": {
+        "type": "object",
+        "properties": {
+          "ufs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Siglas presentes no disco, em ordem."
+          },
+          "completa": {
+            "type": "boolean",
+            "description": "`true` só com as 27 UFs."
+          }
+        },
+        "required": [
+          "ufs",
+          "completa"
+        ],
+        "description": "Quais UFs já têm sqlite na origem."
+      },
+      "Cep": {
+        "type": "object",
+        "properties": {
+          "cep": {
+            "type": "string",
+            "description": "CEP formatado `NNNNN-NNN`."
+          },
+          "pontos": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Ponto"
+            },
+            "description": "Endereços distintos neste CEP (teto na origem)."
+          },
+          "resumo": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Resumo"
+              }
+            ],
+            "description": "Unidades, edifícios, espécies, bairro, cidade, UF e centroide."
+          },
+          "fonte": {
+            "type": "string",
+            "description": "Sempre `cnefe-2022` neste produto."
+          },
+          "cobertura": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Cobertura"
+              }
+            ],
+            "description": "UFs ingeridas agora."
+          },
+          "_links": {
+            "type": "object",
+            "description": "`self`, `empresas` e `unidades` absolutos."
+          }
+        },
+        "required": [
+          "cep",
+          "pontos",
+          "resumo",
+          "fonte",
+          "cobertura",
+          "_links"
+        ],
+        "description": "Pontos CNEFE de um CEP, com resumo e cobertura."
+      },
+      "Ponto": {
+        "type": "object",
+        "properties": {
+          "cep": {
+            "type": "string",
+            "description": "CEP formatado da unidade ou do edifício.",
+            "nullable": true
+          },
+          "logradouro": {
+            "type": "string",
+            "description": "Tipo + nome do logradouro, já juntados."
+          },
+          "numero": {
+            "type": "string",
+            "description": "Número no logradouro.",
+            "nullable": true
+          },
+          "complemento": {
+            "type": "string",
+            "description": "Complementos do CNEFE, se houver.",
+            "nullable": true
+          },
+          "bairro": {
+            "type": "string",
+            "description": "Localidade/bairro no cadastro."
+          },
+          "cidade": {
+            "type": "string",
+            "description": "Município IBGE."
+          },
+          "uf": {
+            "type": "string",
+            "description": "Sigla da unidade da federação."
+          },
+          "lat": {
+            "type": "number",
+            "description": "Latitude WGS84 do ponto.",
+            "nullable": true
+          },
+          "lon": {
+            "type": "number",
+            "description": "Longitude WGS84 do ponto.",
+            "nullable": true
+          },
+          "ibge": {
+            "type": "string",
+            "description": "Código IBGE do município.",
+            "nullable": true
+          },
+          "especie": {
+            "type": "string",
+            "description": "Código da espécie CNEFE (`1`–`8`).",
+            "nullable": true
+          },
+          "especie_label": {
+            "type": "string",
+            "description": "Rótulo IBGE da espécie.",
+            "nullable": true
+          },
+          "tipo_edificacao": {
+            "type": "string",
+            "description": "Casa, apartamento, vila — `COD_TIPO_ESPECIE`.",
+            "nullable": true
+          },
+          "tipo_edificacao_codigo": {
+            "type": "string",
+            "description": "Código `101`–`104`.",
+            "nullable": true
+          },
+          "estabelecimento": {
+            "type": "string",
+            "description": "Nome do estabelecimento, quando a espécie tem.",
+            "nullable": true
+          },
+          "estabelecimentos": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Nomes distintos no edifício (amostra).",
+            "nullable": true
+          },
+          "especies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EspecieContagem"
+            },
+            "description": "Mistura de espécies neste logradouro+número.",
+            "nullable": true
+          },
+          "setor": {
+            "type": "string",
+            "description": "Setor censitário.",
+            "nullable": true
+          },
+          "distrito": {
+            "type": "string",
+            "description": "Código de distrito IBGE.",
+            "nullable": true
+          },
+          "subdistrito": {
+            "type": "string",
+            "description": "Código de subdistrito IBGE.",
+            "nullable": true
+          },
+          "quadra": {
+            "type": "string",
+            "description": "Número da quadra no setor.",
+            "nullable": true
+          },
+          "face": {
+            "type": "string",
+            "description": "Número da face da quadra.",
+            "nullable": true
+          },
+          "nv_geo": {
+            "type": "string",
+            "description": "Nível de geocodificação (`1`–`6`).",
+            "nullable": true
+          },
+          "nv_geo_label": {
+            "type": "string",
+            "description": "O que o nível de geo significa.",
+            "nullable": true
+          },
+          "finalidade": {
+            "type": "string",
+            "description": "Residencial, não residencial, misto ou indeterminado.",
+            "nullable": true
+          },
+          "indicador_estab": {
+            "type": "string",
+            "description": "Único ou múltiplo estabelecimento no endereço.",
+            "nullable": true
+          },
+          "indicador_const": {
+            "type": "string",
+            "description": "Único ou múltiplo em construção/reforma.",
+            "nullable": true
+          },
+          "id_cnefe": {
+            "type": "string",
+            "description": "`COD_UNICO_ENDERECO` da unidade (só no detalhe).",
+            "nullable": true
+          },
+          "tipo_logradouro": {
+            "type": "string",
+            "description": "Tipo (RUA, AVENIDA…).",
+            "nullable": true
+          },
+          "titulo_logradouro": {
+            "type": "string",
+            "description": "Título (DOUTOR…), se houver.",
+            "nullable": true
+          },
+          "nome_logradouro": {
+            "type": "string",
+            "description": "Nome do logradouro sem o tipo.",
+            "nullable": true
+          },
+          "modificador": {
+            "type": "string",
+            "description": "Modificador do número (SN, KM…).",
+            "nullable": true
+          },
+          "unidades": {
+            "type": "integer",
+            "description": "Quantas unidades CNEFE neste logradouro+número (apartamentos, salas)."
+          },
+          "complementos": {
+            "type": "integer",
+            "description": "Complementos distintos no edifício.",
+            "nullable": true
+          },
+          "_links": {
+            "type": "object",
+            "description": "`unidades` absoluto para o detalhe paginado.",
+            "nullable": true
+          },
+          "_origem": {
+            "type": "string",
+            "description": "UF do sqlite que respondeu."
+          }
+        },
+        "required": [
+          "cep",
+          "logradouro",
+          "numero",
+          "complemento",
+          "bairro",
+          "cidade",
+          "uf",
+          "lat",
+          "lon",
+          "ibge",
+          "especie",
+          "especie_label",
+          "tipo_edificacao",
+          "tipo_edificacao_codigo",
+          "estabelecimento",
+          "estabelecimentos",
+          "especies",
+          "setor",
+          "distrito",
+          "subdistrito",
+          "quadra",
+          "face",
+          "nv_geo",
+          "nv_geo_label",
+          "finalidade",
+          "indicador_estab",
+          "indicador_const",
+          "id_cnefe",
+          "tipo_logradouro",
+          "titulo_logradouro",
+          "nome_logradouro",
+          "modificador",
+          "unidades",
+          "complementos",
+          "_links",
+          "_origem"
+        ],
+        "description": "Um endereço CNEFE: número, coordenada IBGE e o fato que veio no CSV."
+      },
+      "EspecieContagem": {
+        "type": "object",
+        "properties": {
+          "codigo": {
+            "type": "string",
+            "description": "Código IBGE da espécie (`1`–`8`).",
+            "nullable": true
+          },
+          "label": {
+            "type": "string",
+            "description": "Rótulo: domicílio particular, ensino, saúde…",
+            "nullable": true
+          },
+          "n": {
+            "type": "integer",
+            "description": "Quantas unidades nesta espécie."
+          }
+        },
+        "required": [
+          "codigo",
+          "label",
+          "n"
+        ],
+        "description": "Quantas unidades CNEFE de uma espécie no recorte."
+      },
+      "Resumo": {
+        "type": "object",
+        "properties": {
+          "address_count": {
+            "type": "integer",
+            "description": "Unidades CNEFE no CEP (não é o número de prédios)."
+          },
+          "edificios": {
+            "type": "integer",
+            "description": "Logradouro+número distintos no CEP."
+          },
+          "bairro": {
+            "type": "string",
+            "description": "Bairro mais frequente na amostra."
+          },
+          "cidade": {
+            "type": "string",
+            "description": "Município IBGE."
+          },
+          "uf": {
+            "type": "string",
+            "description": "Sigla da unidade da federação."
+          },
+          "ibge": {
+            "type": "string",
+            "description": "Código IBGE do município.",
+            "nullable": true
+          },
+          "lat": {
+            "type": "number",
+            "description": "Latitude média dos edifícios devolvidos.",
+            "nullable": true
+          },
+          "lon": {
+            "type": "number",
+            "description": "Longitude média dos edifícios devolvidos.",
+            "nullable": true
+          },
+          "especies": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EspecieContagem"
+            },
+            "description": "Unidades por espécie no CEP inteiro."
+          }
+        },
+        "required": [
+          "address_count",
+          "edificios",
+          "bairro",
+          "cidade",
+          "uf",
+          "ibge",
+          "lat",
+          "lon",
+          "especies"
+        ],
+        "description": "Síntese do CEP: quantos pontos, quantos edifícios, onde fica."
+      },
+      "Unidades": {
+        "type": "object",
+        "properties": {
+          "cep": {
+            "type": "string",
+            "description": "CEP formatado."
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Ponto"
+            },
+            "description": "Unidades desta página (complemento, espécie, id CNEFE)."
+          },
+          "total": {
+            "type": "integer",
+            "description": "Quantas unidades batem o filtro."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Teto desta página."
+          },
+          "offset": {
+            "type": "integer",
+            "description": "Deslocamento pedido."
+          },
+          "hasMore": {
+            "type": "boolean",
+            "description": "`true` se ainda há unidade depois desta página."
+          },
+          "cobertura": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Cobertura"
+              }
+            ],
+            "description": "UFs ingeridas agora."
+          },
+          "_links": {
+            "type": "object",
+            "description": "`self` desta página e `cep` do lookup."
+          }
+        },
+        "required": [
+          "cep",
+          "items",
+          "total",
+          "limit",
+          "offset",
+          "hasMore",
+          "cobertura",
+          "_links"
+        ],
+        "description": "Unidades CNEFE de um CEP (ou de um logradouro+número), paginadas."
+      },
+      "Proximo": {
+        "type": "object",
+        "properties": {
+          "logradouro": {
+            "type": "string",
+            "description": "Logradouro do ponto."
+          },
+          "bairro": {
+            "type": "string",
+            "description": "Localidade."
+          },
+          "cidade": {
+            "type": "string",
+            "description": "Município."
+          },
+          "uf": {
+            "type": "string",
+            "description": "Sigla da unidade da federação."
+          },
+          "cep": {
+            "type": "string",
+            "description": "CEP formatado."
+          },
+          "lat": {
+            "type": "number",
+            "description": "Latitude."
+          },
+          "lon": {
+            "type": "number",
+            "description": "Longitude."
+          },
+          "numero": {
+            "type": "string",
+            "description": "Número no logradouro.",
+            "nullable": true
+          },
+          "complemento": {
+            "type": "string",
+            "description": "Complemento CNEFE, se houver.",
+            "nullable": true
+          },
+          "ibge": {
+            "type": "string",
+            "description": "Código IBGE do município.",
+            "nullable": true
+          },
+          "especie": {
+            "type": "string",
+            "description": "Código da espécie CNEFE.",
+            "nullable": true
+          },
+          "especie_label": {
+            "type": "string",
+            "description": "Rótulo IBGE da espécie.",
+            "nullable": true
+          },
+          "setor": {
+            "type": "string",
+            "description": "Setor censitário.",
+            "nullable": true
+          },
+          "estabelecimento": {
+            "type": "string",
+            "description": "Nome do estabelecimento, se a espécie tiver.",
+            "nullable": true
+          },
+          "nv_geo": {
+            "type": "string",
+            "description": "Nível de geocodificação.",
+            "nullable": true
+          },
+          "nv_geo_label": {
+            "type": "string",
+            "description": "O que o nível de geo significa.",
+            "nullable": true
+          },
+          "id_cnefe": {
+            "type": "string",
+            "description": "`COD_UNICO_ENDERECO`.",
+            "nullable": true
+          },
+          "distancia_m": {
+            "type": "integer",
+            "description": "Distância aproximada em metros."
+          }
+        },
+        "required": [
+          "logradouro",
+          "bairro",
+          "cidade",
+          "uf",
+          "cep",
+          "lat",
+          "lon",
+          "numero",
+          "complemento",
+          "ibge",
+          "especie",
+          "especie_label",
+          "setor",
+          "estabelecimento",
+          "nv_geo",
+          "nv_geo_label",
+          "id_cnefe",
+          "distancia_m"
+        ],
+        "description": "Ponto CNEFE mais perto do par lat/lon."
+      },
+      "PaginaPonto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Ponto"
+            },
+            "description": "Resultados (teto 50)."
+          },
+          "total": {
+            "type": "integer",
+            "description": "Quantos vieram nesta página."
+          }
+        },
+        "required": [
+          "items",
+          "total"
+        ],
+        "description": "Lista paginada de pontos."
+      },
+      "Empresas": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Empresa"
+            },
+            "description": "Cards da origem CNPJ (teto 50 por página)."
+          },
+          "total": {
+            "type": "integer",
+            "description": "Tamanho desta página, ou total se a origem mandar."
+          },
+          "hasMore": {
+            "type": "boolean",
+            "description": "`true` quando a origem tem mais estabelecimentos além do teto."
+          },
+          "page": {
+            "type": "integer",
+            "description": "Página 0-based pedida à origem."
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "hasMore",
+          "page"
+        ],
+        "description": "Estabelecimentos da Receita neste CEP, via api-cnpj no c3."
+      },
+      "Empresa": {
+        "type": "object",
+        "properties": {
+          "cnpj": {
+            "type": "string",
+            "description": "14 dígitos, sem máscara."
+          },
+          "cnpjFormatted": {
+            "type": "string",
+            "description": "CNPJ com pontuação."
+          },
+          "razaoSocial": {
+            "type": "string",
+            "description": "Razão social na Receita.",
+            "nullable": true
+          },
+          "nomeFantasia": {
+            "type": "string",
+            "description": "Nome fantasia, se houver.",
+            "nullable": true
+          },
+          "situacao": {
+            "type": "object",
+            "description": "`codigo` numérico e `label` (Ativa, Inapta, Baixada…).",
+            "nullable": true
+          },
+          "uf": {
+            "type": "string",
+            "description": "UF do estabelecimento.",
+            "nullable": true
+          },
+          "municipio": {
+            "type": "string",
+            "description": "Município da Receita.",
+            "nullable": true
+          },
+          "bairro": {
+            "type": "string",
+            "description": "Bairro do estabelecimento.",
+            "nullable": true
+          },
+          "cnae": {
+            "type": "object",
+            "description": "`codigo` e `descricao` da atividade principal.",
+            "nullable": true
+          }
+        },
+        "required": [
+          "cnpj",
+          "cnpjFormatted",
+          "razaoSocial",
+          "nomeFantasia",
+          "situacao",
+          "uf",
+          "municipio",
+          "bairro",
+          "cnae"
+        ],
+        "description": "Card da busca por CEP na origem CNPJ — não é a ficha completa do Radar."
+      },
+      "Raio": {
+        "type": "object",
+        "properties": {
+          "centro": {
+            "type": "object",
+            "description": "`lat`, `lon` e, quando o centro veio de CEP, `cep` formatado."
+          },
+          "raio_m": {
+            "type": "integer",
+            "description": "Raio usado, em metros."
+          },
+          "total_pontos": {
+            "type": "integer",
+            "description": "Endereços CNEFE dentro do raio, somando os CEPs devolvidos."
+          },
+          "ceps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CepNoRaio"
+            },
+            "description": "Até 300 CEPs, ordenados por distância."
+          },
+          "truncado": {
+            "type": "boolean",
+            "description": "`true` se havia mais de 300 CEPs no raio — diminua o raio."
+          },
+          "fonte": {
+            "type": "string",
+            "description": "Sempre `cnefe-2022`."
+          },
+          "_links": {
+            "type": "object",
+            "description": "`self` e `vizinhanca` com o mesmo centro e raio."
+          }
+        },
+        "required": [
+          "centro",
+          "raio_m",
+          "total_pontos",
+          "ceps",
+          "truncado",
+          "fonte",
+          "_links"
+        ],
+        "description": "CEPs a N metros de um ponto, do mais perto ao mais longe."
+      },
+      "CepNoRaio": {
+        "type": "object",
+        "properties": {
+          "cep": {
+            "type": "string",
+            "description": "CEP formatado `NNNNN-NNN`."
+          },
+          "cep8": {
+            "type": "string",
+            "description": "CEP com 8 dígitos, pronto para `/api/empresas` e `/api/cep`."
+          },
+          "uf": {
+            "type": "string",
+            "description": "UF do sqlite que respondeu."
+          },
+          "pontos": {
+            "type": "integer",
+            "description": "Endereços CNEFE deste CEP dentro do raio."
+          },
+          "distancia_m": {
+            "type": "integer",
+            "description": "Distância do centro ao ponto mais perto deste CEP, em metros."
+          },
+          "lat": {
+            "type": "number",
+            "description": "Latitude média dos pontos deste CEP no raio."
+          },
+          "lon": {
+            "type": "number",
+            "description": "Longitude média dos pontos deste CEP no raio."
+          }
+        },
+        "required": [
+          "cep",
+          "cep8",
+          "uf",
+          "pontos",
+          "distancia_m",
+          "lat",
+          "lon"
+        ],
+        "description": "Um CEP dentro do raio: quantos pontos CNEFE dele caem no círculo e a que distância começa."
+      },
+      "Vizinhanca": {
+        "type": "object",
+        "properties": {
+          "centro": {
+            "type": "object",
+            "description": "`lat`, `lon` e `cep` quando o centro veio de CEP."
+          },
+          "raio_m": {
+            "type": "integer",
+            "description": "Raio usado, em metros."
+          },
+          "ceps": {
+            "type": "integer",
+            "description": "Quantos CEPs entraram na conta (teto 300)."
+          },
+          "truncado": {
+            "type": "boolean",
+            "description": "`true` se o raio tinha mais de 300 CEPs."
+          },
+          "desde": {
+            "type": "string",
+            "description": "Data ISO de corte para abertas/baixadas."
+          },
+          "base": {
+            "type": "object",
+            "description": "`dump_date`: data do dump da Receita carregado — a janela padrão conta a partir dela."
+          },
+          "cnae": {
+            "type": "string",
+            "description": "Prefixo de CNAE aplicado, se houve.",
+            "nullable": true
+          },
+          "empresas": {
+            "type": "object",
+            "description": "`total`, `ativas`, `abertas_desde`, `baixadas_desde` (nulos quando `lenta`)."
+          },
+          "por_cnae": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContagemCnae"
+            },
+            "description": "As 20 subclasses com mais ativas."
+          },
+          "amostra_abertas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Abertura"
+            },
+            "description": "As 50 aberturas mais recentes, com distância."
+          },
+          "lenta": {
+            "type": "boolean",
+            "description": "`true` quando alguma contagem estourou o teto de tempo e veio nula."
+          },
+          "fonte": {
+            "type": "string",
+            "description": "Sempre `cnefe-2022 + receita`."
+          },
+          "_links": {
+            "type": "object",
+            "description": "`self` e `raio` com o mesmo centro."
+          }
+        },
+        "required": [
+          "centro",
+          "raio_m",
+          "ceps",
+          "truncado",
+          "desde",
+          "base",
+          "cnae",
+          "empresas",
+          "por_cnae",
+          "amostra_abertas",
+          "lenta",
+          "fonte",
+          "_links"
+        ],
+        "description": "O que a Receita sabe sobre os CEPs dentro do raio: contagens, classes e aberturas recentes."
+      },
+      "ContagemCnae": {
+        "type": "object",
+        "properties": {
+          "cnae": {
+            "type": "integer",
+            "description": "Subclasse CNAE (7 dígitos)."
+          },
+          "descricao": {
+            "type": "string",
+            "description": "Descrição oficial da subclasse.",
+            "nullable": true
+          },
+          "ativas": {
+            "type": "integer",
+            "description": "Estabelecimentos ativos neste CNAE no raio."
+          },
+          "abertas_desde": {
+            "type": "integer",
+            "description": "Dos ativos, quantos abriram desde `desde`."
+          }
+        },
+        "required": [
+          "cnae",
+          "descricao",
+          "ativas",
+          "abertas_desde"
+        ],
+        "description": "Uma classe de CNAE no raio."
+      },
+      "Abertura": {
+        "type": "object",
+        "properties": {
+          "cnpj": {
+            "type": "string",
+            "description": "14 dígitos."
+          },
+          "cnpjFormatted": {
+            "type": "string",
+            "description": "CNPJ com pontuação."
+          },
+          "nome": {
+            "type": "string",
+            "description": "Nome fantasia ou, na falta, razão social.",
+            "nullable": true
+          },
+          "razaoSocial": {
+            "type": "string",
+            "description": "Razão social.",
+            "nullable": true
+          },
+          "nomeFantasia": {
+            "type": "string",
+            "description": "Nome fantasia declarado na Receita, quando a empresa tem um.",
+            "nullable": true
+          },
+          "cnae": {
+            "type": "object",
+            "description": "`codigo` e `descricao` da atividade principal.",
+            "nullable": true
+          },
+          "dataInicio": {
+            "type": "string",
+            "description": "Data de início de atividade, ISO."
+          },
+          "endereco": {
+            "type": "object",
+            "description": "`tipoLogradouro`, `logradouro`, `numero`, `bairro`, `cep` formatado."
+          },
+          "distancia_m": {
+            "type": "integer",
+            "description": "Distância do centro ao CEP deste estabelecimento.",
+            "nullable": true
+          }
+        },
+        "required": [
+          "cnpj",
+          "cnpjFormatted",
+          "nome",
+          "razaoSocial",
+          "nomeFantasia",
+          "cnae",
+          "dataInicio",
+          "endereco",
+          "distancia_m"
+        ],
+        "description": "Um estabelecimento aberto desde `desde`, sem contato e sem sócio."
+      },
+      "Local": {
+        "type": "object",
+        "properties": {
+          "cidade": {
+            "type": "string",
+            "description": "Cidade que a borda atribuiu ao IP.",
+            "nullable": true
+          },
+          "uf": {
+            "type": "string",
+            "description": "Região/UF da borda.",
+            "nullable": true
+          },
+          "pais": {
+            "type": "string",
+            "description": "País ISO.",
+            "nullable": true
+          },
+          "cep": {
+            "type": "string",
+            "description": "CEP aproximado da borda, se houver.",
+            "nullable": true
+          }
+        },
+        "required": [
+          "cidade",
+          "uf",
+          "pais",
+          "cep"
+        ],
+        "description": "Geo de borda do visitante (Cloudflare). Nunca é cacheado."
+      },
+      "Metricas": {
+        "type": "object",
+        "properties": {
+          "app": {
+            "type": "string",
+            "description": "Nome do produto."
+          },
+          "today": {
+            "type": "string",
+            "description": "Dia de referência (UTC, AAAA-MM-DD)."
+          },
+          "today_visits": {
+            "type": "integer",
+            "description": "Zero neste produto: visitas são medidas pelo GA e pela borda CF."
+          },
+          "today_contacts": {
+            "type": "integer",
+            "description": "Mensagens de contato hoje. Só com `METRICS_TOKEN`: contato não sai sem token."
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Um registro por dia da janela, com as contagens de cada métrica."
+          },
+          "usage": {
+            "type": "object",
+            "description": "`creditos`: movimentos de crédito do PontoFato por dia — chamadas pagas da API, x402 ou crédito, com `produto` filtrando o que é da casa."
+          },
+          "accounts": {
+            "type": "object",
+            "description": "Sem contas neste produto: objeto vazio."
+          },
+          "financeiro": {
+            "type": "object",
+            "description": "Agregado do dia: `hoje_usd`, `hoje_count`, `rede`. Só com `METRICS_TOKEN`: dinheiro não sai sem token; a série completa é `payments`."
+          },
+          "payments": {
+            "type": "object",
+            "description": "Resumo financeiro do x402; só com METRICS_TOKEN."
+          }
+        },
+        "required": [
+          "app",
+          "today",
+          "today_visits",
+          "days",
+          "usage",
+          "accounts"
+        ],
+        "description": "Painel de 7 dias do operador. `payments` só aparece com o token e só em Base mainnet."
+      }
+    }
+  },
+  "paths": {
+    "/okf/{arquivo}": {
+      "get": {
+        "operationId": "get_okf_by_arquivo",
+        "summary": "Bundle OKF (Open Knowledge Format v0.1): markdown com frontmatter para o agente ler o produto inteiro sem parsear HTML.",
+        "description": "Devolve: `text/markdown`. Comece por `/okf/index.md`, que lista o bundle.",
+        "parameters": [
+          {
+            "name": "arquivo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "`text/markdown`. Comece por `/okf/index.md`, que lista o bundle."
+          },
+          "404": {
+            "description": "Arquivo fora do bundle."
+          }
+        }
+      }
+    },
+    "/.well-known/{arquivo}": {
+      "get": {
+        "operationId": "get_well_known_by_arquivo",
+        "summary": "Descoberta de máquina antes da home: `api-catalog` (RFC 9727, linkset com a API e o MCP), `security.txt` (RFC 9116) e `mcp-registry-auth` (chave do registro oficial de MCP).",
+        "description": "Devolve: `application/linkset+json` no api-catalog; `text/plain` nos outros dois.",
+        "parameters": [
+          {
+            "name": "arquivo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "`application/linkset+json` no api-catalog; `text/plain` nos outros dois."
+          },
+          "404": {
+            "description": "Nome fora dos quatro publicados."
+          }
+        }
+      }
+    },
+    "/apis.json": {
+      "get": {
+        "operationId": "get_apis_json",
+        "summary": "APIs.json (apisjson.org, 0.19): o índice que o APIs.io colhe — a API, o MCP, OpenAPI, guia e bundle OKF num arquivo só. Também em `/.well-known/apis.json`.",
+        "description": "Devolve: `application/json` no formato APIs.json 0.19: `apis[]` com `baseURL`, `humanURL` e `properties[]`.",
+        "responses": {
+          "200": {
+            "description": "`application/json` no formato APIs.json 0.19: `apis[]` com `baseURL`, `humanURL` e `properties[]`."
+          }
+        }
+      }
+    },
+    "/api/": {
+      "get": {
+        "operationId": "api_index",
+        "summary": "Índice auto-descrito: cada rota, o que cobra e como plugar o MCP.",
+        "description": "Devolve: { name, description, build, base_url, docs, endpoints, mcp_tools }",
+        "responses": {
+          "200": {
+            "description": "{ name, description, build, base_url, docs, endpoints, mcp_tools }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "Nome do produto."
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "O que o produto faz."
+                    },
+                    "build": {
+                      "type": "string",
+                      "description": "Commit publicado."
+                    },
+                    "base_url": {
+                      "type": "string",
+                      "description": "Origem em que esta API está servindo."
+                    },
+                    "docs": {
+                      "type": "object",
+                      "description": "Links para llms.txt, OpenAPI, MCP e a UI."
+                    },
+                    "endpoints": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      },
+                      "description": "Catálogo de endpoints."
+                    },
+                    "mcp_tools": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Tools do MCP."
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "description",
+                    "build",
+                    "base_url",
+                    "docs",
+                    "endpoints",
+                    "mcp_tools"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health": {
+      "get": {
+        "operationId": "health",
+        "summary": "Saúde da origem sqlite e cobertura por UF.",
+        "description": "Devolve: { ok, origem, cobertura{ufs,completa}, pontos, build }",
+        "responses": {
+          "200": {
+            "description": "{ ok, origem, cobertura{ufs,completa}, pontos, build }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Saude"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Nenhuma UF montada na origem."
+          }
+        }
+      }
+    },
+    "/mcp": {
+      "post": {
+        "operationId": "post_mcp",
+        "summary": "MCP Streamable HTTP — as tools deste catálogo, despachadas neste mesmo Worker.",
+        "description": "Devolve: JSON-RPC 2.0 (`initialize`, `tools/list`, `tools/call`).",
+        "responses": {
+          "200": {
+            "description": "JSON-RPC 2.0 (`initialize`, `tools/list`, `tools/call`)."
+          }
+        }
+      }
+    },
+    "/api/cep/{cep}": {
+      "get": {
+        "operationId": "cep",
+        "summary": "Pontos CNEFE de um CEP, com lat/lon IBGE — não é chute de mapa.",
+        "description": "Devolve: { cep, pontos[{cep,logradouro,numero,complemento,bairro,cidade,uf,lat,lon,ibge,especie,especie_label,tipo_edificacao,tipo_edificacao_codigo,estabelecimento,estabelecimentos,especies,setor,distrito,subdistrito,quadra,face,nv_geo,nv_geo_label,finalidade,indicador_estab,indicador_const,id_cnefe,tipo_logradouro,titulo_logradouro,nome_logradouro,modificador,unidades,complementos,_links,_origem}], resumo{address_count,edificios,bairro,cidade,uf,ibge,lat,lon,especies}, fonte, cobertura{ufs,completa}, _links }",
+        "parameters": [
+          {
+            "name": "cep",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ cep, pontos[{cep,logradouro,numero,complemento,bairro,cidade,uf,lat,lon,ibge,especie,especie_label,tipo_edificacao,tipo_edificacao_codigo,estabelecimento,estabelecimentos,especies,setor,distrito,subdistrito,quadra,face,nv_geo,nv_geo_label,finalidade,indicador_estab,indicador_const,id_cnefe,tipo_logradouro,titulo_logradouro,nome_logradouro,modificador,unidades,complementos,_links,_origem}], resumo{address_count,edificios,bairro,cidade,uf,ibge,lat,lon,especies}, fonte, cobertura{ufs,completa}, _links }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cep"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "CEP inválido (tamanho ou `00000000`)."
+          },
+          "404": {
+            "description": "CEP bem-formado fora da base; `cobertura` diz quais UFs já existem."
+          },
+          "503": {
+            "description": "Origem sqlite fora."
+          }
+        }
+      }
+    },
+    "/api/cep/{cep}/unidades": {
+      "get": {
+        "operationId": "unidades",
+        "summary": "Unidades CNEFE de um CEP, com complemento, espécie e id — paginado.",
+        "description": "O lookup do CEP agrupa por logradouro+número. Esta rota devolve cada unidade (apartamento, loja) com o fato CNEFE. Sem `logradouro`/`numero`, pagina o CEP inteiro.\nDevolve: { cep, items[{cep,logradouro,numero,complemento,bairro,cidade,uf,lat,lon,ibge,especie,especie_label,tipo_edificacao,tipo_edificacao_codigo,estabelecimento,estabelecimentos,especies,setor,distrito,subdistrito,quadra,face,nv_geo,nv_geo_label,finalidade,indicador_estab,indicador_const,id_cnefe,tipo_logradouro,titulo_logradouro,nome_logradouro,modificador,unidades,complementos,_links,_origem}], total, limit, offset, hasMore, cobertura{ufs,completa}, _links }",
+        "parameters": [
+          {
+            "name": "cep",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "logradouro",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Logradouro exatamente como no lookup (tipo + nome)."
+          },
+          {
+            "name": "numero",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Número do edifício no CNEFE."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50
+            },
+            "description": "Itens por página, teto 50."
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0
+            },
+            "description": "Deslocamento 0-based."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ cep, items[{cep,logradouro,numero,complemento,bairro,cidade,uf,lat,lon,ibge,especie,especie_label,tipo_edificacao,tipo_edificacao_codigo,estabelecimento,estabelecimentos,especies,setor,distrito,subdistrito,quadra,face,nv_geo,nv_geo_label,finalidade,indicador_estab,indicador_const,id_cnefe,tipo_logradouro,titulo_logradouro,nome_logradouro,modificador,unidades,complementos,_links,_origem}], total, limit, offset, hasMore, cobertura{ufs,completa}, _links }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Unidades"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "CEP inválido."
+          },
+          "404": {
+            "description": "CEP fora da malha, ou o logradouro+número não existe nele."
+          }
+        }
+      }
+    },
+    "/api/proximo": {
+      "get": {
+        "operationId": "proximo",
+        "summary": "Ponto CNEFE mais perto de um par lat/lon. Sem default para (0,0).",
+        "description": "Ausente ou vazio NÃO vira zero. `(0,0)` é o golfo da Guiné e só entra se a pessoa mandou.\nDevolve: { logradouro, bairro, cidade, uf, cep, lat, lon, numero, complemento, ibge, especie, especie_label, setor, estabelecimento, nv_geo, nv_geo_label, id_cnefe, distancia_m }",
+        "parameters": [
+          {
+            "name": "lat",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "description": "Latitude WGS84, −90 a 90.",
+            "example": "-15.7897"
+          },
+          {
+            "name": "lon",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number"
+            },
+            "description": "Longitude WGS84, −180 a 180.",
+            "example": "-47.8793"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ logradouro, bairro, cidade, uf, cep, lat, lon, numero, complemento, ibge, especie, especie_label, setor, estabelecimento, nv_geo, nv_geo_label, id_cnefe, distancia_m }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Proximo"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`lat` ou `lon` ausentes ou fora da faixa."
+          },
+          "404": {
+            "description": "Nada na cobertura perto do ponto."
+          }
+        }
+      }
+    },
+    "/api/buscar": {
+      "get": {
+        "operationId": "buscar",
+        "summary": "Busca textual de logradouro (FTS5), com UF e cidade opcionais.",
+        "description": "Devolve: { items[{cep,logradouro,numero,complemento,bairro,cidade,uf,lat,lon,ibge,especie,especie_label,tipo_edificacao,tipo_edificacao_codigo,estabelecimento,estabelecimentos,especies,setor,distrito,subdistrito,quadra,face,nv_geo,nv_geo_label,finalidade,indicador_estab,indicador_const,id_cnefe,tipo_logradouro,titulo_logradouro,nome_logradouro,modificador,unidades,complementos,_links,_origem}], total }",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Termo com 3+ caracteres.",
+            "example": "paulista"
+          },
+          {
+            "name": "uf",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Restringe a uma UF.",
+            "example": "SP"
+          },
+          {
+            "name": "cidade",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Trecho do município."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ items[{cep,logradouro,numero,complemento,bairro,cidade,uf,lat,lon,ibge,especie,especie_label,tipo_edificacao,tipo_edificacao_codigo,estabelecimento,estabelecimentos,especies,setor,distrito,subdistrito,quadra,face,nv_geo,nv_geo_label,finalidade,indicador_estab,indicador_const,id_cnefe,tipo_logradouro,titulo_logradouro,nome_logradouro,modificador,unidades,complementos,_links,_origem}], total }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginaPonto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Termo curto demais."
+          }
+        }
+      }
+    },
+    "/api/empresas": {
+      "get": {
+        "operationId": "empresas",
+        "summary": "Estabelecimentos da Receita neste CEP (join no c3, teto 50).",
+        "description": "Devolve: { items[{cnpj,cnpjFormatted,razaoSocial,nomeFantasia,situacao,uf,municipio,bairro,cnae}], total, hasMore, page }",
+        "parameters": [
+          {
+            "name": "cep",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "8 dígitos, com ou sem hífen.",
+            "example": "01310100"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0
+            },
+            "description": "Página 0-based da origem CNPJ (50 por página)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ items[{cnpj,cnpjFormatted,razaoSocial,nomeFantasia,situacao,uf,municipio,bairro,cnae}], total, hasMore, page }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Empresas"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "CEP inválido."
+          },
+          "503": {
+            "description": "API de CNPJ indisponível."
+          }
+        }
+      }
+    },
+    "/api/raio": {
+      "get": {
+        "operationId": "raio",
+        "summary": "CEPs a N metros de um ponto, com distância e quantos endereços CNEFE cada um tem — raio em metros, não bairro em texto.",
+        "description": "Devolve: { centro, raio_m, total_pontos, ceps[{cep,cep8,uf,pontos,distancia_m,lat,lon}], truncado, fonte, _links }",
+        "parameters": [
+          {
+            "name": "cep",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Centro = média dos pontos deste CEP. Alternativa a lat/lon.",
+            "example": "01310100"
+          },
+          {
+            "name": "lat",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number"
+            },
+            "description": "Latitude do centro, se não vier `cep`."
+          },
+          {
+            "name": "lon",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number"
+            },
+            "description": "Longitude do centro, se não vier `cep`."
+          },
+          {
+            "name": "raio",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 500
+            },
+            "description": "Raio em metros, 1 a 2000.",
+            "example": 800
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ centro, raio_m, total_pontos, ceps[{cep,cep8,uf,pontos,distancia_m,lat,lon}], truncado, fonte, _links }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Raio"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Sem centro (`cep` ou `lat`+`lon`), CEP inválido, coordenada inválida ou raio fora de 1–2000."
+          },
+          "404": {
+            "description": "CEP fora da malha, ou nenhum ponto CNEFE no raio; `cobertura` diz quais UFs existem."
+          },
+          "503": {
+            "description": "Origem sqlite fora."
+          }
+        }
+      }
+    },
+    "/api/vizinhanca": {
+      "get": {
+        "operationId": "vizinhanca",
+        "summary": "Empresas ativas, abertas e baixadas num raio em metros, por CNAE, com as aberturas mais recentes e a distância de cada uma — o CNEFE dá o raio, a Receita dá o fato.",
+        "description": "Devolve: { centro, raio_m, ceps, truncado, desde, base, cnae, empresas, por_cnae[{cnae,descricao,ativas,abertas_desde}], amostra_abertas[{cnpj,cnpjFormatted,nome,razaoSocial,nomeFantasia,cnae,dataInicio,endereco,distancia_m}], lenta, fonte, _links }",
+        "parameters": [
+          {
+            "name": "cep",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Centro = média dos pontos deste CEP. Alternativa a lat/lon.",
+            "example": "01310100"
+          },
+          {
+            "name": "lat",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number"
+            },
+            "description": "Latitude do centro, se não vier `cep`."
+          },
+          {
+            "name": "lon",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number"
+            },
+            "description": "Longitude do centro, se não vier `cep`."
+          },
+          {
+            "name": "raio",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 500
+            },
+            "description": "Raio em metros, 1 a 2000.",
+            "example": 800
+          },
+          {
+            "name": "cnae",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Prefixo de CNAE: divisão (2 dígitos), classe (5) ou subclasse (7).",
+            "example": "56"
+          },
+          {
+            "name": "desde",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Data ISO para “abriu/baixou desde”. Padrão: 90 dias antes da data da base (`base.dump_date`).",
+            "example": "2026-02-01"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ centro, raio_m, ceps, truncado, desde, base, cnae, empresas, por_cnae[{cnae,descricao,ativas,abertas_desde}], amostra_abertas[{cnpj,cnpjFormatted,nome,razaoSocial,nomeFantasia,cnae,dataInicio,endereco,distancia_m}], lenta, fonte, _links }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Vizinhanca"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Centro ausente, CEP/coordenada/raio inválidos, `cnae` fora de 2/5/7 dígitos ou `desde` fora de 1900–hoje."
+          },
+          "402": {
+            "description": "Cota diária grátis esgotada: pague $0.05 por x402 (`accepts[]`) ou mande crédito pré-pago (`Authorization: Bearer cred_…`)."
+          },
+          "404": {
+            "description": "CEP fora da malha ou nenhum ponto no raio."
+          },
+          "503": {
+            "description": "Origem sqlite ou API de CNPJ fora."
+          }
+        }
+      }
+    },
+    "/api/local": {
+      "get": {
+        "operationId": "get_api_local",
+        "summary": "Cidade/UF de quem chama, pela borda Cloudflare. Sem cache.",
+        "description": "Devolve: { cidade, uf, pais, cep }",
+        "responses": {
+          "200": {
+            "description": "{ cidade, uf, pais, cep }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Local"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/contact": {
+      "post": {
+        "operationId": "contact",
+        "summary": "Contato: humano com Turnstile (grátis) ou agente com x402 $0.10.",
+        "description": "Devolve: { ok, path }",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Nome (alias `nome`)."
+                  },
+                  "email": {
+                    "type": "string",
+                    "description": "E-mail de resposta."
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "Mensagem (alias `mensagem`)."
+                  },
+                  "form_ts": {
+                    "type": "integer",
+                    "description": "Epoch ms de quando o form abriu (2s–12h)."
+                  }
+                },
+                "required": [
+                  "name",
+                  "email",
+                  "message"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{ ok, path }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "description": "Sempre `true` quando a mensagem foi aceita."
+                    },
+                    "path": {
+                      "type": "string",
+                      "description": "Caminho: humano com captcha ou agente pago."
+                    }
+                  },
+                  "required": [
+                    "ok",
+                    "path"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validação."
+          },
+          "402": {
+            "description": "Agente: pague $0.10 e repita com X-PAYMENT."
+          },
+          "403": {
+            "description": "Turnstile inválido."
+          }
+        }
+      }
+    },
+    "/api/metrics": {
+      "get": {
+        "operationId": "get_api_metrics",
+        "summary": "Métricas dos últimos 7 dias para o painel do operador; com o token, inclui os pagamentos.",
+        "description": "Sem credencial devolve o uso real da API: movimentos de crédito da casa por dia, com `produto` separando o PontoFato dos outros produtos no banco compartilhado. Visitas da interface não são contadas aqui — quem mede visita é o GA e a borda CF. Com `METRICS_TOKEN` em Bearer acrescenta `payments` — só x402 liquidado em Base mainnet.\nDevolve: { app, today, today_visits, today_contacts?, days, usage, accounts, financeiro?, payments? }",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "`Bearer <METRICS_TOKEN>` para incluir o bloco financeiro; token errado é 401."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ app, today, today_visits, today_contacts?, days, usage, accounts, financeiro?, payments? }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Metricas"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token de operador errado."
+          },
+          "503": {
+            "description": "Worker sem METRICS_TOKEN configurado."
+          }
+        }
+      }
+    },
+    "/api/credito": {
+      "post": {
+        "operationId": "post_api_credito",
+        "summary": "Recarrega crédito pré-pago: paga uma vez com x402 e recebe o token que desconta em qualquer API da casa.",
+        "description": "Devolve: { token, saldo_usd, guarde, usar, saldo_em }",
+        "parameters": [
+          {
+            "name": "usd",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Pacote: 1, 5, 10 ou 25 dólares."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{ token, saldo_usd, guarde, usar, saldo_em }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string",
+                      "description": "Token portador do saldo (`cred_…`). Mostrado UMA vez — não há como recuperá-lo."
+                    },
+                    "saldo_usd": {
+                      "type": "string",
+                      "description": "Saldo creditado."
+                    },
+                    "guarde": {
+                      "type": "string",
+                      "description": "Aviso de que o token é o portador do crédito."
+                    },
+                    "usar": {
+                      "type": "string",
+                      "description": "Como apresentar o token nas rotas pagas."
+                    },
+                    "saldo_em": {
+                      "type": "string",
+                      "description": "Onde consultar saldo e extrato."
+                    }
+                  },
+                  "required": [
+                    "token",
+                    "saldo_usd",
+                    "guarde",
+                    "usar",
+                    "saldo_em"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Pacote fora da lista (1, 5, 10 ou 25)."
+          },
+          "402": {
+            "description": "Sem pagamento — o corpo traz `accepts[]` do x402."
+          }
+        }
+      },
+      "get": {
+        "operationId": "get_api_credito",
+        "summary": "Saldo e extrato do crédito — as últimas movimentações, sem devolver o token.",
+        "description": "Devolve: { saldo_micros, saldo_usd, criado_em, movimentos }",
+        "responses": {
+          "200": {
+            "description": "{ saldo_micros, saldo_usd, criado_em, movimentos }",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "saldo_micros": {
+                      "type": "integer",
+                      "description": "Saldo em micro-dólares (1e-6 USD)."
+                    },
+                    "saldo_usd": {
+                      "type": "string",
+                      "description": "Saldo formatado."
+                    },
+                    "criado_em": {
+                      "type": "string",
+                      "description": "Quando o crédito foi aberto."
+                    },
+                    "movimentos": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      },
+                      "description": "Entradas e saídas recentes, com produto e recurso."
+                    }
+                  },
+                  "required": [
+                    "saldo_micros",
+                    "saldo_usd",
+                    "criado_em",
+                    "movimentos"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sem token ou token desconhecido."
+          }
+        }
+      }
+    }
+  }
+}

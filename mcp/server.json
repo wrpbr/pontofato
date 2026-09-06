@@ -1,0 +1,13 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
+  "name": "com.pontofato/pontofato",
+  "description": "Brazilian addresses for agents: IBGE-geocoded CEP points, radius search and companies by CEP.",
+  "version": "1.0.0",
+  "websiteUrl": "https://pontofato.com",
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://pontofato.com/mcp"
+    }
+  ]
+}
