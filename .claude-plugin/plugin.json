@@ -1,0 +1,31 @@
+{
+  "name": "pontofato",
+  "displayName": "PontoFato",
+  "version": "1.0.0",
+  "description": "Find Brazilian addresses and the companies around them: CEP with IBGE coordinates (CNEFE 2022) and census data, street search, nearest address, CEPs within a radius and companies by activity within 2 km, through a skill and the remote MCP server.",
+  "author": {
+    "name": "PontoFato",
+    "email": "contato@pontofato.com",
+    "url": "https://pontofato.com"
+  },
+  "homepage": "https://pontofato.com",
+  "repository": "https://github.com/wrpbr/pontofato",
+  "license": "MIT-0",
+  "keywords": [
+    "cep",
+    "brazil",
+    "address",
+    "geocoding",
+    "ibge",
+    "cnefe",
+    "companies",
+    "cnae",
+    "mcp",
+    "agent-skills"
+  ],
+  "icon": "./assets/icon.png",
+  "documentationUrl": "https://pontofato.com/developers",
+  "supportUrl": "https://github.com/wrpbr/pontofato/issues",
+  "privacyPolicyUrl": "https://pontofato.com/privacidade",
+  "termsOfServiceUrl": "https://pontofato.com/termos"
+}

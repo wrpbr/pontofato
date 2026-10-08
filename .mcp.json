@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "pontofato": {
+      "type": "http",
+      "url": "https://pontofato.com/mcp"
+    }
+  }
+}

@@ -1,92 +1,99 @@
-# PontoFato
+# PontoFato — skill and MCP server for AI agents
 
-> Onde fica e quem está num CEP, das bases públicas do IBGE (CNEFE 2022) e da Receita.
+<img src="assets/icon.png" alt="PontoFato" width="72" align="right">
 
-**In English.** PontoFato answers two questions about a place in Brazil: where it is and who is there. The point comes from CNEFE, the address list IBGE walked for the 2022 Census (111 million addresses with an official coordinate, all 27 states); the fact comes from the open CNPJ data: the companies registered at that postal code. Free API without an account (radius neighbourhood beyond ten calls a day is paid); responses in Portuguese; remote MCP server.
+PontoFato lets an AI agent find Brazilian addresses and the companies around them. A postal code (CEP) returns its
+addresses with the coordinates of the IBGE 2022 Census (CNEFE), the census tract data of each building and the
+companies registered there. The agent can also search a street, find the address nearest to a point and count the companies of
+an activity within 2 km. This repository packages the PontoFato skill and the connection to its remote MCP server for
+Claude Code, Codex, Cursor and other agents.
 
-**No ar:** https://pontofato.com · **Índice da API:** https://pontofato.com/api/ · **OpenAPI:** https://pontofato.com/openapi.json · **Servidor MCP:** https://pontofato.com/mcp · **Docs para agentes:** https://pontofato.com/llms.txt
+**Site:** https://pontofato.com · **MCP server:** `https://pontofato.com/mcp` · **Prices:** https://pontofato.com/pricing ·
+**API docs:** https://pontofato.com/developers
 
-## O que faz
+## What your agent can do
 
-O PontoFato responde duas perguntas sobre um lugar no Brasil: onde ele está e quem está nele.
+- Look up a CEP: addresses, latitude and longitude, and the census tract data (people, homes and income) of each
+  building.
+- Search a street by name, in a state or a city, and list the units (apartments, shops) of a building.
+- Find the address nearest to a coordinate and the CEPs within a radius of up to 2 km.
+- List the companies registered at a CEP.
+- Count active, opened and closed companies of an activity (CNAE) around a point, with the latest openings.
 
-O ponto vem do CNEFE, a lista de endereços que o IBGE percorreu no Censo de 2022, com a coordenada oficial de cada unidade — não é geocodificação por aproximação. O fato vem dos dados abertos do CNPJ da Receita Federal, recarregados duas vezes por semana: quem está registrado naquele CEP, ativas primeiro, mas também baixadas e inaptas, porque o histórico de um lugar faz parte do fato.
+Try: *"Which restaurants opened near CEP 01310-100 in the last months?"* or
+*"Find the coordinates of Avenida Paulista, 1000, São Paulo."*
 
-## Começo rápido (sem cadastro)
+## Install
 
-Pontos de um CEP com lat/lon do IBGE, espécie, setor censitário, quadra e face:
+Claude Code, as a plugin with the skill and the MCP server:
 
-```bash
-curl -s https://pontofato.com/api/cep/70040010
+```
+/plugin marketplace add wrpbr/pontofato
+/plugin install pontofato@pontofato
 ```
 
-Empresas da Receita registradas no CEP:
+Any agent that reads Agent Skills (Claude Code, Codex, Cursor, OpenCode and others):
 
 ```bash
-curl -s 'https://pontofato.com/api/empresas?cep=70040010'
+npx skills add wrpbr/pontofato
 ```
 
-Ponto CNEFE mais próximo de uma coordenada:
+Only the MCP server (remote, Streamable HTTP, no key for the free tools):
 
 ```bash
-curl -s 'https://pontofato.com/api/proximo?lat=-15.7891&lon=-47.8800'
+claude mcp add --transport http pontofato https://pontofato.com/mcp   # Claude Code
+codex mcp add pontofato --url https://pontofato.com/mcp               # Codex
 ```
-
-CEPs num raio em metros:
-
-```bash
-curl -s 'https://pontofato.com/api/raio?cep=70040010&raio=500'
-```
-
-## Servidor MCP (remoto, sem instalar nada)
-
-Streamable HTTP sobre a mesma API pública. Cada tool é uma chamada nesta API; o `operationId` do OpenAPI é o nome da tool. Cartão do servidor: `GET https://pontofato.com/mcp`.
-
-Claude Code:
-
-```bash
-claude mcp add --transport http pontofato https://pontofato.com/mcp
-```
-
-Cursor (`.cursor/mcp.json`):
 
 ```json
-{
-  "mcpServers": {
-    "pontofato": {
-      "url": "https://pontofato.com/mcp"
-    }
-  }
-}
+{ "mcpServers": { "pontofato": { "url": "https://pontofato.com/mcp" } } }
 ```
 
-Tools principais: `cep`, `unidades`, `proximo`, `buscar`, `empresas`, `raio`, `vizinhanca`.
+The JSON above goes in `.cursor/mcp.json` for Cursor and in the MCP settings of most other clients. In Claude.ai and
+Claude Desktop, open Settings → Connectors → Add custom connector and paste the server address.
 
-## Preço
+## Price
 
-**Grátis.** Consulta de CEP, coordenada, unidades, ponto mais próximo, busca de logradouro, raio e empresas do CEP, sem cadastro; dez vizinhanças por raio por dia.
+The CEP lookup, the street search, the nearest address, the radius and the companies of a CEP are free and need no
+key. The company count around a point (`vizinhanca`) has its own allowance; the API index tells when it is free. The
+full CNPJ and address check gives a free allowance each day; after it, the check uses a pack or a plan. Plans do not
+renew automatically. You can pay with Pix in reais, with a prepaid credit or per request with x402 (USDC). The
+current prices are at https://pontofato.com/pricing.
 
-**Pago.** Vizinhança por raio além das dez chamadas por dia: US$ 0,05 por chamada, por requisição (x402) ou crédito pré-pago.
+## What the plugin sends
 
-## O que não é
+The skill tells the agent to call the PontoFato API at pontofato.com. The MCP server also runs at pontofato.com.
+Your queries (CEPs, street names, coordinates and activity codes) go to pontofato.com over HTTPS. A credit token goes
+only when you give one for a paid call. The plugin runs no local program and reads no local file.
 
-Não é geocodificação por aproximação, não é o DNE dos Correios (para o CEP de hoje, Correios) e não guarda o que você consulta.
+## Data and limits
 
-## Arquivos deste repositório
+Addresses come from the IBGE CNEFE of the 2022 Census. They do not prove that a CEP or an address is valid today.
+Companies come from the public CNPJ dump of Receita Federal and are matched to addresses by CEP, so a company
+distance is a CEP distance, not the exact building.
 
-| | |
+## Em português
+
+O PontoFato deixa o agente de IA achar endereços brasileiros e as empresas em volta. O CEP traz os endereços com a
+coordenada do IBGE (CNEFE 2022), os dados do setor do Censo de cada prédio e as empresas registradas nele. O agente também
+busca rua, acha o endereço mais próximo de um ponto e conta as empresas de uma atividade num raio de até 2 km. Este
+repositório traz a skill e a conexão com o servidor MCP remoto. Instale com os comandos acima. A consulta de CEP é
+grátis e não pede chave. Os preços estão em https://pontofato.com/pricing.
+
+## Files
+
+| File | What it is |
 |---|---|
-| `README.md` | esta página |
-| `openapi.json` | documento OpenAPI 3; `operationId` = nome da tool MCP |
-| `llms.txt` | guia curto para agentes (rotas, auth, preço, MCP) |
-| `llms-full.txt` | referência completa: parâmetros, corpo, resposta campo a campo, erros (quando publicada) |
-| `apis.json` | índice APIs.json (APIs.io) |
-| `mcp/server.json` | manifesto publicado no registro oficial de MCP (`com.pontofato/pontofato`) |
-| `okf/` | bundle OKF: markdown com front-matter (índice, sobre, API, FAQ) |
-| `examples/` | `curl.sh` e `python.py` com as chamadas grátis acima |
+| `skills/pontofato/SKILL.md` | The skill: which tool answers which question, the limits of the data and the rules for paid calls |
+| `.mcp.json` | The remote MCP server of the plugin |
+| `.claude-plugin/plugin.json` | The plugin manifest |
+| `.claude-plugin/marketplace.json` | Lets Claude Code add this repository as a plugin marketplace |
+| `server.json` | The manifest in the official MCP registry (`com.pontofato/pontofato`) |
+| `glama.json` | The maintainer for the Glama MCP directory |
 
-## Sobre este repositório
+## License and contact
 
-Este repositório espelha as superfícies públicas e legíveis por máquina do PontoFato, como servidas em https://pontofato.com: o documento OpenAPI, o guia `llms.txt`, o manifesto do registro MCP, o bundle OKF e o índice APIs.json. O produto em si não é código aberto; o espelho existe para a API e o servidor MCP poderem ser encontrados, lidos e linkados daqui. Os arquivos são regenerados das superfícies no ar (última sincronização: 2026-09-05); se algo aqui divergir do site, vale o site.
-
-Issues e sugestões são bem-vindas aqui. Contato: contato@pontofato.com. Autor: Wendel ([@wrpbr](https://github.com/wrpbr)).
+The files in this repository are under the MIT-0 license. The PontoFato service and its data are not part of this
+license: their use follows the [terms of use](https://pontofato.com/termos) and the
+[privacy policy](https://pontofato.com/privacidade). For questions or problems, open an issue here or write to
+contato@pontofato.com.
