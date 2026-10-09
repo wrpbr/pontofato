@@ -8,7 +8,7 @@ companies registered there. The agent can also search a street, find the address
 an activity within 2 km. This repository packages the PontoFato skill and the connection to its remote MCP server for
 Claude Code, Codex, Cursor and other agents.
 
-**Site:** https://pontofato.com · **MCP server:** `https://pontofato.com/mcp` · **Prices:** https://pontofato.com/pricing ·
+**Site:** https://pontofato.com · **MCP server:** `https://pontofato.com/mcp?checkout=site` · **Prices:** https://pontofato.com/pricing ·
 **API docs:** https://pontofato.com/developers
 
 ## What your agent can do
@@ -41,12 +41,12 @@ npx skills add wrpbr/pontofato
 Only the MCP server (remote, Streamable HTTP, no key for the free tools):
 
 ```bash
-claude mcp add --transport http pontofato https://pontofato.com/mcp   # Claude Code
-codex mcp add pontofato --url https://pontofato.com/mcp               # Codex
+claude mcp add --transport http pontofato 'https://pontofato.com/mcp?checkout=site'   # Claude Code
+codex mcp add pontofato --url 'https://pontofato.com/mcp?checkout=site'               # Codex
 ```
 
 ```json
-{ "mcpServers": { "pontofato": { "url": "https://pontofato.com/mcp" } } }
+{ "mcpServers": { "pontofato": { "url": "https://pontofato.com/mcp?checkout=site" } } }
 ```
 
 The JSON above goes in `.cursor/mcp.json` for Cursor and in the MCP settings of most other clients. In Claude.ai and
@@ -56,9 +56,10 @@ Claude Desktop, open Settings → Connectors → Add custom connector and paste 
 
 The CEP lookup, the street search, the nearest address, the radius and the companies of a CEP are free and need no
 key. The company count around a point (`vizinhanca`) has its own allowance; the API index tells when it is free. The
-full CNPJ and address check gives a free allowance each day; after it, the check uses a pack or a plan. Plans do not
-renew automatically. You can pay with Pix in reais, with a prepaid credit or per request with x402 (USDC). The
-current prices are at https://pontofato.com/pricing.
+full CNPJ and address check gives a free allowance each day; after it, the check uses a pack or a plan. You buy
+plans and prepaid credit on the site, and plans do not renew automatically. The plugin never pays: with
+`checkout=site`, the MCP server has no purchase tool and no payment argument. The agent shows the price and the link,
+and after your purchase it uses your credit token. The current prices are at https://pontofato.com/pricing.
 
 ## What the plugin sends
 
@@ -78,7 +79,8 @@ O PontoFato deixa o agente de IA achar endereços brasileiros e as empresas em v
 coordenada do IBGE (CNEFE 2022), os dados do setor do Censo de cada prédio e as empresas registradas nele. O agente também
 busca rua, acha o endereço mais próximo de um ponto e conta as empresas de uma atividade num raio de até 2 km. Este
 repositório traz a skill e a conexão com o servidor MCP remoto. Instale com os comandos acima. A consulta de CEP é
-grátis e não pede chave. Os preços estão em https://pontofato.com/pricing.
+grátis e não pede chave. A compra é sempre no site, e o plugin nunca paga sozinho. Os preços estão em
+https://pontofato.com/pricing.
 
 ## Files
 

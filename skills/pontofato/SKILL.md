@@ -12,7 +12,8 @@ companies registered at each CEP. Use it to put an address on the map and to see
 
 ## Connect
 
-- MCP server (preferred): `https://pontofato.com/mcp`. Transport: Streamable HTTP. The free tools need no key.
+- MCP server (preferred): `https://pontofato.com/mcp?checkout=site`. Transport: Streamable HTTP. The free tools
+  need no key. With `checkout=site`, the person buys on the site and the agent never pays.
 - HTTP API: base URL `https://pontofato.com`. Each MCP tool calls one route of this API.
 - If the MCP tools are not available, call the HTTP routes with `curl` or with your fetch tool.
 - Discovery: `GET https://pontofato.com/api/` lists the routes, prices and limits.
@@ -32,7 +33,6 @@ companies registered at each CEP. Use it to put an address on the map and to see
 | `consulta_cnpj` | `GET /api/consulta/cnpj/{cnpj}` | Check a company: Receita record, sanctions and the map point of its address. | Daily free allowance, then balance |
 | `consulta_cep` | `GET /api/consulta/cep/{cep}` | Get up to 20 addresses and 20 companies of a CEP in one lookup. | Daily free allowance, then balance |
 | `consulta_planos` | `GET /api/consulta` | Read the free allowance of today, the plans and your balance. | Free |
-| `consulta_comprar` | `POST /api/consulta/planos/{oferta}` | Buy a lookup pack or plan. | Paid |
 | `api_index` | `GET /api/` | Read the routes, the prices and `quota.free_now`. | Free |
 | `pricing` | `GET /api/pricing` | Read the current prices and free allowances. | Free |
 | `health` | `GET /api/health` | Read the coverage by state. `cobertura.completa` is true only with all 27 states. | Free |
@@ -50,20 +50,21 @@ companies registered at each CEP. Use it to put an address on the map and to see
    before that date, not before today. Read the field before you say that a street stopped growing.
 7. Before `vizinhanca`, read `quota.free_now` from `api_index`. If it includes `vizinhanca` or `*`, the call is
    free. If not, read the price and get the approval of the user first.
-8. Before a call that spends money or balance, read the price from `pricing` or `consulta_planos`.
-   Do not buy or pay until the user approves the item and the amount.
-9. If a call returns HTTP 402, show the offer and the price to the user. After approval, pay and send the same
-   call again, with header `Authorization: Bearer cred_…` (prepaid credit) or with `X-PAYMENT` (x402, USDC on
-   Base). Keep the same `Idempotency-Key` or `compra` mark when you retry.
+8. Before a call that spends balance, read the price from `pricing` or `consulta_planos`.
+   Do not spend balance until the user approves the item and the amount.
+9. Never pay by yourself. If a call returns HTTP 402, show the price and https://pontofato.com/pricing to the
+   user. The person buys on the site. After the purchase, send the same call again with the person's prepaid
+   credit token in the header `Authorization: Bearer cred_…`. Keep the same `Idempotency-Key` when you retry.
 10. Keep tokens (`cred_…`, `mmk_…`) secret. Do not write them in files, logs or answers.
 11. If you get HTTP 429 or 503, wait for the time in `Retry-After` and try once more.
 
-## Pay
+## Buy
 
-- Prepaid credit: `POST https://pontofato.com/api/credito?usd=5` returns 402. After the payment, it returns a
-  `cred_…` token one time only. The same token works in PontoFato, Radar CNPJ and EditalMD.
-- Pix in reais (Brazil): `GET https://pontofato.com/api/credito/pix` gives the packs and the steps.
-- People can see prices and pay at https://pontofato.com/pricing.
+- The person buys on the site: https://pontofato.com/pricing shows the lookup plans, the packs and the prepaid
+  credit, with the prices. Plans do not renew automatically.
+- `consulta_planos` and `pricing` read the plans and the prices. They do not charge.
+- A prepaid credit gives a `cred_…` token one time only. The same token works in PontoFato, Radar CNPJ and
+  EditalMD.
 
 ## Examples
 

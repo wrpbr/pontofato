@@ -2,7 +2,7 @@
   "mcpServers": {
     "pontofato": {
       "type": "http",
-      "url": "https://pontofato.com/mcp"
+      "url": "https://pontofato.com/mcp?checkout=site"
     }
   }
 }
