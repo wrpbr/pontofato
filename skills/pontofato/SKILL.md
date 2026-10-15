@@ -10,7 +10,16 @@ compatibility: Needs HTTPS access to pontofato.com. Works with the remote MCP se
 PontoFato links Brazilian postal codes (CEP) to the address points of the IBGE 2022 Census (CNEFE) and to the
 companies registered at each CEP. Use it to put an address on the map and to see the businesses around it.
 
+The website also lets a person choose a point on the map. Use the `raio` tool with
+`lat`, `lon` and `raio` for the same results. Distances are straight-line distances
+to the nearest address point of each CEP. Counts include addresses inside the radius.
+
 ## Connect
+
+HTML index pages are free for people and crawlers, without an API quota.
+JSON, Markdown, OKF and MCP index data calls have 1,000 free reads per day, IP and product.
+Above that allowance, US$1 buys 1,000 shared reads for 30 days without automatic renewal.
+See `/api-access-guide.md` for evaluation, purchase and retry instructions.
 
 - MCP server (preferred): `https://pontofato.com/mcp?checkout=site`. Transport: Streamable HTTP. The free tools
   need no key. With `checkout=site`, the person buys on the site and the agent never pays.
@@ -23,9 +32,12 @@ companies registered at each CEP. Use it to put an address on the map and to see
 
 | Tool | HTTP | Use it to | Cost |
 |---|---|---|---|
+| `consulta_cadastro` | `GET /api/consulta/cadastro/{cnpj}` | Read basic company data without contacts or live analysis. | Free, no allowance consumed |
+| `consulta_endereco` | `GET /api/consulta/endereco/{cep}` | Read up to 20 addresses and 20 companies of a CEP. | Free, no allowance consumed |
 | `cep` | `GET /api/cep/{cep}` | List the addresses of a CEP with latitude, longitude and the census tract data of each building. | Free |
 | `unidades` | `GET /api/cep/{cep}/unidades` | List each unit (apartment, shop) of a CEP with its complement. Paginated. | Free |
 | `buscar` | `GET /api/buscar` | Find a street by name (`q`), with optional `uf` and `cidade`. Up to 20 results. | Free |
+| `sugerir` | `GET /api/sugerir` | Complete a postal code from three digits, or suggest a street. Up to eight places with street, neighbourhood and city. | Free |
 | `proximo` | `GET /api/proximo` | Find the address nearest to `lat` and `lon`. | Free |
 | `empresas` | `GET /api/empresas` | List the companies registered at a CEP, 50 per page. | Free |
 | `raio` | `GET /api/raio` | List the CEPs within `raio` meters (1 to 2000) of a CEP or a coordinate. | Free |
@@ -52,7 +64,7 @@ companies registered at each CEP. Use it to put an address on the map and to see
    free. If not, read the price and get the approval of the user first.
 8. Before a call that spends balance, read the price from `pricing` or `consulta_planos`.
    Do not spend balance until the user approves the item and the amount.
-9. Never pay by yourself. If a call returns HTTP 402, show the price and https://pontofato.com/pricing to the
+9. Never pay by yourself. If a call returns HTTP 402, show the price and the checkout URL from the response to the
    user. The person buys on the site. After the purchase, send the same call again with the person's prepaid
    credit token in the header `Authorization: Bearer cred_…`. Keep the same `Idempotency-Key` when you retry.
 10. Keep tokens (`cred_…`, `mmk_…`) secret. Do not write them in files, logs or answers.
@@ -60,9 +72,13 @@ companies registered at each CEP. Use it to put an address on the map and to see
 
 ## Buy
 
-- The person buys on the site: https://pontofato.com/pricing shows the lookup plans, the packs and the prepaid
-  credit, with the prices. Plans do not renew automatically.
+- The person buys on the site. Attempting a paid feature opens the package dialog with prices and conditions.
+  Lookup packages do not renew automatically.
 - `consulta_planos` and `pricing` read the plans and the prices. They do not charge.
+- The HTTP API also supports lookup purchases without an account through x402 v1 or v2.
+  The paying wallet owns the package. Its `mmw_…` credential comes from
+  `/api/auth/wallet/agent/start` and `/api/auth/wallet/agent/token`.
+  The MCP connection above keeps checkout on the site.
 - A prepaid credit gives a `cred_…` token one time only. The same token works in PontoFato, Radar CNPJ and
   EditalMD.
 
