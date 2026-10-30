@@ -56,10 +56,15 @@ Claude Desktop, open Settings → Connectors → Add custom connector and paste 
 
 The CEP lookup, the street search, the nearest address, the radius and the companies of a CEP are free and need no
 key. The company count around a point (`vizinhanca`) has its own allowance; the API index tells when it is free. The
-full CNPJ and address check gives a free allowance each day; after it, the check uses a pack or a plan. You buy
+full CNPJ check gives a free allowance each day; after it, the check uses a pack or a plan. CEP lookup stays free. You buy
 plans and prepaid credit on the site, and plans do not renew automatically. The plugin never pays: with
 `checkout=site`, the MCP server has no purchase tool and no payment argument. The agent shows the price and the link,
 and after your purchase it uses your credit token. The current prices are at https://pontofato.com/pricing.
+
+For an agent authorized to pay, the direct `/mcp` also exposes existing per-call services without an account.
+Read `/api/pricing` and `/api/billing` first. An x402 quote is in `structuredContent`;
+retry with `params._meta["x402/payment"]` only within the user's budget.
+The site offers Pix or card only when that method is enabled.
 
 ## What the plugin sends
 
