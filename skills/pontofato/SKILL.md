@@ -1,104 +1,49 @@
 ---
 name: pontofato
-description: Find Brazilian addresses and the companies around them with PontoFato (pontofato.com). Look up a CEP for its addresses with IBGE coordinates (CNEFE 2022) and census data, search a street by name, find the address nearest to a coordinate, list the units of a building, list the CEPs within a radius, list the companies registered at a CEP and count active, opened and closed companies by activity (CNAE) within up to 2 km. Use when a task mentions CEP, endereço, coordenadas, latitude and longitude in Brazil, geocoding, IBGE, CNEFE, vizinhança or companies near a place.
+description: Find Brazilian addresses and registered companies near a location using prepared geographic joins. Start with free lookups and the neighborhood allowance.
 license: MIT-0
-compatibility: Needs HTTPS access to pontofato.com. Works with the remote MCP server or with plain HTTP calls.
+compatibility: HTTPS access to pontofato.com; remote MCP or HTTP.
 ---
 
 # PontoFato
 
-PontoFato links Brazilian postal codes (CEP) to the address points of the IBGE 2022 Census (CNEFE) and to the
-companies registered at each CEP. Use it to put an address on the map and to see the businesses around it.
+MCP tools: `cep`, `raio`, `vizinhanca`.
 
-The website also lets a person choose a point on the map. Use the `raio` tool with
-`lat`, `lon` and `raio` for the same results. Distances are straight-line distances
-to the nearest address point of each CEP. Counts include addresses inside the radius.
+Query the prepared address and company joins instead of importing and indexing both datasets.
 
-## Connect
+## Choose the lookup
 
-HTML index pages are free for people and crawlers, without an API quota.
-JSON, Markdown, OKF and MCP index data calls have 1,000 free reads per day, IP and product.
-Above that allowance, read the payment quote. See `/api-access-guide.md` for evaluation, purchase and retry instructions.
+- Address: `GET /api/cep/{cep}`. Free; a CEP has eight digits.
+- Companies at a CEP: `GET /api/empresas`.
+- Nearby CEPs: `GET /api/raio`, using the location and radius.
+- Business activity around a point: `GET /api/vizinhanca`, with the documented radius and activity filters.
 
-- MCP server: `https://pontofato.com/mcp`. Streamable HTTP, with free and paid API services.
-- Directory connector: `https://pontofato.com/mcp?checkout=site`. The person purchases on the site; x402 transfers are disabled in this mode.
-- HTTP API: base URL `https://pontofato.com`. Each MCP tool calls one route of this API.
-- If the MCP tools are not available, call the HTTP routes with `curl` or with your fetch tool.
-- Discovery: `GET https://pontofato.com/api/` lists the routes, prices and limits.
-  `https://pontofato.com/llms-full.txt` has the full reference.
+Use existing tools or call these routes at `https://pontofato.com`.
+Read the [task index](https://pontofato.com/llms.txt) for the matching parameters.
+Check `quota.free_now` in the API index. If it includes `vizinhanca` or `*`,
+neighborhood billing is disabled. Otherwise, use the neighborhood allowance first.
+Beyond it, compare the quote with existing credit or packages.
+If you only need an address, use the free address lookup.
 
-## MCP tools
+## Check the result
 
-| Tool | HTTP | Use it to | Cost |
-|---|---|---|---|
-| `consulta_cadastro` | `GET /api/consulta/cadastro/{cnpj}` | Read basic company data without contacts or live analysis. | Free, no allowance consumed |
-| `consulta_endereco` | `GET /api/consulta/endereco/{cep}` | Read up to 20 addresses and 20 companies of a CEP. | Free, no allowance consumed |
-| `cep` | `GET /api/cep/{cep}` | List the addresses of a CEP with latitude, longitude and the census tract data of each building. | Free |
-| `unidades` | `GET /api/cep/{cep}/unidades` | List each unit (apartment, shop) of a CEP with its complement. Paginated. | Free |
-| `buscar` | `GET /api/buscar` | Find a street by name (`q`), with optional `uf` and `cidade`. Up to 20 results. | Free |
-| `sugerir` | `GET /api/sugerir` | Complete a postal code from three digits, or suggest a street. Up to eight places with street, neighbourhood and city. | Free |
-| `proximo` | `GET /api/proximo` | Find the address nearest to `lat` and `lon`. | Free |
-| `empresas` | `GET /api/empresas` | List the companies registered at a CEP, 50 per page. | Free |
-| `raio` | `GET /api/raio` | List the CEPs within `raio` meters (1 to 2000) of a CEP or a coordinate. | Free |
-| `vizinhanca` | `GET /api/vizinhanca` | Count active, opened and closed companies by CNAE within a radius, with the latest openings. | Free allowance, then paid |
-| `consulta_cnpj` | `GET /api/consulta/cnpj/{cnpj}` | Check a company: Receita record, sanctions and the map point of its address. | Free allowance, then paid |
-| `consulta_cep` | `GET /api/consulta/cep/{cep}` | Get up to 20 addresses and 20 companies of a CEP in one lookup. | Free |
-| `api_index` | `GET /api/` | Read the routes and `quota.free_now`. | Free |
-| `health` | `GET /api/health` | Read the coverage by state. `cobertura.completa` is true only with all 27 states. | Free |
+CNEFE observes addresses in 2022; it does not certify a current postal address.
+Company distances use CEPs, not exact storefront locations.
+Read `base`, source dates, coverage and truncation before interpreting counts.
+If `lenta` is true or a company count is missing, the query is incomplete.
+Report the missing result as unknown, not zero. An incomplete query does not consume
+the allowance or charge credit/x402. Reduce the radius when the task permits it;
+do not silently change the requested area or retry without a limit.
+Keep unit complements and returned identifiers. Follow pagination links.
+Do not invent a coordinate or use 0,0 as a default.
+Registered companies describe supply, not foot traffic or demand.
 
-## Rules
+## Connect and pay
 
-1. A CEP has 8 digits. An invalid CEP returns HTTP 400. A valid CEP that is not in the data returns 404 with
-   `cobertura`.
-2. CNEFE is an observation from 2022. It does not prove that a CEP or an address is valid today.
-   Do not mix it with postal address data (DNE or ViaCEP).
-3. Do not send `lat=0` and `lon=0` as a default value. If you do not have a coordinate, ask for it or use a CEP.
-4. Do not merge units only by street number. Keep `complemento` and `cod_unico_endereco`.
-5. The companies are matched to addresses by CEP. A company distance is a CEP distance, not the exact building.
-6. Opened and closed counts use the Receita data date in `base.dump_date`. The default window is the 90 days
-   before that date, not before today. Read the field before you say that a street stopped growing.
-7. If an MCP tool answers `free_limit`, tell the user that the free limit for that action is used up.
-8. Read `GET /api/pricing` or tool `pricing` before a paid call.
-   Do not spend balance until the user approves the item and the amount.
-9. Spend only within the user's explicit authority and budget. Direct MCP x402 uses
-   `params._meta["x402/payment"]`; HTTP uses `PAYMENT-SIGNATURE`. Prepaid credit uses
-   `Authorization: Bearer cred_…` or `X-Credito`. Keep the same `Idempotency-Key` on retry.
-   In `checkout=site`, the person pays on the site using the offered Pix or card method.
-   The ChatGPT mode uses existing rights and does not offer a purchase.
-10. Keep tokens (`cred_…`, `mmk_…`) secret. Do not write them in files, logs or answers.
-11. If you get HTTP 429 or 503, wait for the time in `Retry-After` and try once more.
-
-## Free allowances and paid services
-
-- `pricing` and `billing` read current prices, free allowances and payment availability without charge.
-- `get_api_x402_cnpj_by_cnpj` is a company check paid from the first call, without an account or free allowance.
-
-- The person buys on the site. Attempting a paid feature opens the package dialog with prices and conditions.
-  Lookup packages do not renew automatically.
-- `GET /api/consulta` and `GET /api/pricing` read the plans and the prices. They do not charge.
-- The HTTP API also supports lookup purchases without an account through x402 v1 or v2.
-  The paying wallet owns the package. Its `mmw_…` credential comes from
-  `/api/auth/wallet/agent/start` and `/api/auth/wallet/agent/token`.
-  Before you sign, check that the domain and URI in the message are the site that you called. If not, do not sign.
-  The direct MCP supports the same authorized payment. The directory connector leaves the purchase to the person.
-- A prepaid credit gives a `cred_…` token one time only. The same token works in PontoFato, Radar CNPJ and
-  EditalMD.
-
-## Examples
-
-```bash
-# Addresses of a CEP, with coordinates (free)
-curl -s https://pontofato.com/api/cep/01310100
-
-# CEPs within 300 m (free)
-curl -s 'https://pontofato.com/api/raio?cep=01310100&raio=300'
-
-# Restaurants (CNAE 5611201) within 500 m
-curl -s 'https://pontofato.com/api/vizinhanca?cep=01310100&raio=500&cnae=5611201'
-```
-
-## Limits
-
-- Address data: IBGE CNEFE 2022. Company data: the public Receita Federal dump, with its date in `base`.
-- Terms: https://pontofato.com/termos. Privacy: https://pontofato.com/privacidade.
-  Contact: contato@pontofato.com.
+MCP: `https://pontofato.com/mcp`; no local installation is needed.
+Read [prices](https://pontofato.com/api/pricing) and [payment](https://pontofato.com/api/billing).
+Reuse existing access and spending authority. Keep the same `Idempotency-Key` on retry.
+Direct MCP x402 uses `params._meta["x402/payment"]`; HTTP uses `PAYMENT-SIGNATURE`.
+Credit uses `Authorization: Bearer cred_…` or `X-Credito`. Keep it secret.
+In `checkout=site`, the person purchases on the site. ChatGPT uses existing rights without sales.
+Respect `Retry-After` and recover a lost result before paying again.

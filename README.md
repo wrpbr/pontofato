@@ -2,19 +2,18 @@
 
 <img src="assets/icon.png" alt="PontoFato" width="72" align="right">
 
-PontoFato lets an AI agent find Brazilian addresses and the companies around them. A postal code (CEP) returns its
-addresses with the coordinates of the IBGE 2022 Census (CNEFE), the census tract data of each building and the
-companies registered there. The agent can also search a street, find the address nearest to a point and count the companies of
-an activity within 2 km. This repository packages the PontoFato skill and the connection to its remote MCP server for
-Claude Code, Codex, Cursor and other agents.
+PontoFato gives an AI agent prepared address lookups and geographic joins with Brazilian company records.
+Query a postal code (CEP), a street or a neighborhood without downloading and indexing both datasets.
+The service returns IBGE 2022 address coordinates (CNEFE), available census tract context and companies
+matched by CEP. Census tract figures describe the area, not the occupants of a building.
+This repository packages the skill and remote MCP connection for Claude Code, Codex, Cursor and other agents.
 
 **Site:** https://pontofato.com · **MCP server:** `https://pontofato.com/mcp?checkout=site` · **Prices:** https://pontofato.com/pricing ·
 **API docs:** https://pontofato.com/developers
 
 ## What your agent can do
 
-- Look up a CEP: addresses, latitude and longitude, and the census tract data (people, homes and income) of each
-  building.
+- Look up a CEP: addresses, latitude and longitude, with available census tract context.
 - Search a street by name, in a state or a city, and list the units (apartments, shops) of a building.
 - Find the address nearest to a coordinate and the CEPs within a radius of up to 2 km.
 - List the companies registered at a CEP.
@@ -77,11 +76,15 @@ only when you give one for a paid call. The plugin runs no local program and rea
 Addresses come from the IBGE CNEFE of the 2022 Census. They do not prove that a CEP or an address is valid today.
 Companies come from the public CNPJ dump of Receita Federal and are matched to addresses by CEP, so a company
 distance is a CEP distance, not the exact building.
+Check the base date, period and truncation. If `lenta` is true or a company count is missing,
+report an incomplete result, not zero companies. That result does not consume the neighborhood allowance
+or charge credit/x402. Reducing the radius changes the question; do it only when the user's task permits it.
 
 ## Em português
 
-O PontoFato deixa o agente de IA achar endereços brasileiros e as empresas em volta. O CEP traz os endereços com a
-coordenada do IBGE (CNEFE 2022), os dados do setor do Censo de cada prédio e as empresas registradas nele. O agente também
+O PontoFato entrega consultas prontas de endereços e cruzamentos com empresas, sem baixar e indexar as duas bases.
+O CEP traz os endereços com a coordenada do IBGE (CNEFE 2022), o contexto disponível do setor censitário
+e as empresas relacionadas por CEP. Os números do setor descrevem a área, não os moradores de um imóvel. O agente também
 busca rua, acha o endereço mais próximo de um ponto e conta as empresas de uma atividade num raio de até 2 km. Este
 repositório traz a skill e a conexão com o servidor MCP remoto. Instale com os comandos acima. A consulta de CEP é
 grátis e não pede chave. A compra é sempre no site, e o plugin nunca paga sozinho. Os preços estão em
