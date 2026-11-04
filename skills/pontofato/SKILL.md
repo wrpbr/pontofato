@@ -7,9 +7,22 @@ compatibility: HTTPS access to pontofato.com; remote MCP or HTTP.
 
 # PontoFato
 
-MCP tools: `cep`, `raio`, `vizinhanca`.
+MCP tools: `cep`, `empresas`, `buscar`, `unidades`, `raio`, `vizinhanca`.
 
 Query the prepared address and company joins instead of importing and indexing both datasets.
+
+## Everyday requests
+
+Use this skill for Brazilian address and local-business questions, even without a product name.
+Reuse the supplied address or postal code. Ask for a missing location or radius.
+Resolve coordinates from the service. Preserve the requested area and report incomplete coverage.
+Registered business counts do not prove demand or foot traffic.
+
+- "Which address and location are recorded for postal code 70040-010?" Use `cep`.
+- "Which companies are registered at postal code 70040-010?" Use `empresas` and follow pagination.
+- "How many bakeries are registered near my proposed business location?" Resolve the address with `buscar`, then use `vizinhanca` within the authorized coverage.
+- "List postal codes within one kilometer of this address." Resolve the point and use `raio`.
+- "Which address numbers and unit details are recorded at postal code 70040-010?" Use `unidades` and preserve source details.
 
 ## Choose the lookup
 
