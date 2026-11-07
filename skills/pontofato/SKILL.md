@@ -1,6 +1,6 @@
 ---
 name: pontofato
-description: Find Brazilian addresses and registered companies near a location using prepared geographic joins. Start with free lookups and the neighborhood allowance.
+description: Look up Brazilian postal codes with addresses, registered business totals and census-sector data. Use prepared geographic joins for nearby companies.
 license: MIT-0
 compatibility: HTTPS access to pontofato.com; remote MCP or HTTP.
 ---
@@ -9,7 +9,7 @@ compatibility: HTTPS access to pontofato.com; remote MCP or HTTP.
 
 MCP tools: `cep`, `empresas`, `buscar`, `unidades`, `raio`, `vizinhanca`.
 
-Query the prepared address and company joins instead of importing and indexing both datasets.
+Query prepared address, company and census joins instead of importing and indexing those datasets.
 
 ## Everyday requests
 
@@ -26,7 +26,9 @@ Registered business counts do not prove demand or foot traffic.
 
 ## Choose the lookup
 
-- Address: `GET /api/cep/{cep}`. Free; a CEP has eight digits.
+- Address and local context: `GET /api/cep/{cep}`. Free; a CEP has eight digits.
+  Read `empresas_no_cep` for company totals and `pontos[].censo` for available census-sector measures.
+  This consolidation is free. Do not buy neighborhood access to answer a postal-code question.
 - Companies at a CEP: `GET /api/empresas`.
 - Nearby CEPs: `GET /api/raio`, using the location and radius.
 - Business activity around a point: `GET /api/vizinhanca`, with the documented radius and activity filters.
@@ -41,6 +43,8 @@ If you only need an address, use the free address lookup.
 ## Check the result
 
 CNEFE observes addresses in 2022; it does not certify a current postal address.
+Census data also reflects 2022. Sector population and income do not describe every resident or the entire CEP.
+Income is not current purchasing power. Keep missing measures unknown.
 Company distances use CEPs, not exact storefront locations.
 Read `base`, source dates, coverage and truncation before interpreting counts.
 If `lenta` is true or a company count is missing, the query is incomplete.
@@ -57,6 +61,9 @@ MCP: `https://pontofato.com/mcp`; no local installation is needed.
 Read [prices](https://pontofato.com/api/pricing) and [payment](https://pontofato.com/api/billing).
 Reuse existing access and spending authority. Keep the same `Idempotency-Key` on retry.
 Direct MCP x402 uses `params._meta["x402/payment"]`; HTTP uses `PAYMENT-SIGNATURE`.
-Credit uses `Authorization: Bearer cred_…` or `X-Credito`. Keep it secret.
+An authenticated MCP connection already supplies access. Do not request another key or credit code.
+For account API calls, use `X-Api-Key: mmk_…` or `Authorization: Bearer mmo_…` (OAuth).
+On paid operations that accept account balance, that credential also authorizes payment.
+Without an account, prepaid credit uses `Authorization: Bearer cred_…`. Keep it secret.
 In `checkout=site`, the person purchases on the site. ChatGPT uses existing rights without sales.
 Respect `Retry-After` and recover a lost result before paying again.
